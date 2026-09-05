@@ -1,4 +1,4 @@
-name: "Connect to Headscale"
+name: "Connect to Headscale tailnet"
 description: "Connects to a Headscale server using the Tailscale CLI"
 
 branding:
