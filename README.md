@@ -1,10 +1,10 @@
 ## About
 
-GitHub Action to connect a runner to a Headscale server using the Tailscale CLI. This action installs and configures the necessary tools to establish a secure connection to a Headscale server.
+GitHub Action, чтобы подключить раннер к инстансу Headscale. 
 
-## Usage
+## Использование
 
-### Quick start
+### Быстрый старт
 
 ```yaml
 name: Connect to Headscale
@@ -17,35 +17,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Connect to Headscale
-        uses: candidco/headscale-connect-action@v1
+        uses: pluxa1221/headscale-action@v1
         with:
-          headscale-cli-address: 'your-headscale-server-address'
-          headscale-cli-api-key: 'your-api-key'
+          login-server: 'login-server'
+          auth-key: 'auth-key'
 ```
 
-## Customizing
+## Кастомизация
 
-### inputs
+### Входные данные
 
-The following inputs can be used as `step.with` keys:
+Следующие ключи могут быть использованы в блоке `step.with`:
 
-| Name                           | Type   | Default             | Description                                                                                   |
-|--------------------------------|--------|---------------------|-----------------------------------------------------------------------------------------------|
-| `headscale-cli-address`        | String |                     | The address of the Headscale CLI.                                                             |
-| `headscale-cli-api-key`        | String |                     | The API key for the Headscale CLI.                                                            |
-| `headscale-user`               | String | `github-actions`    | The user to create or use in Headscale.                                                       |
-| `headscale-preauthkey-expiration` | String | `30m`               | The expiration time for the preauth key.                                                      |
-| `headscale-version`            | String | `0.27.1`            | The version of Headscale to install (minimum supported: 0.27.1).                              |
-| `headscale-os-arch`            | String | `linux_amd64`       | The OS and architecture for the Headscale binary.                                             |
+| Название                          | Тип    | Описание                                              |
+|-----------------------------------|--------|-------------------------------------------------------|
+| `login-server`                    | String | URL вашего инстанса Headscale.                        |
+| `auth-key`                        | String | Preauthkey для входа раннера в Tailnet автоматически. |
 
-## Outputs
+## Выход
 
-This action does not produce any outputs.
-
-## Contributing
-
-Want to contribute? Awesome! Contributions are welcome. Please check the [CONTRIBUTING.md](/.github/CONTRIBUTING.md) for guidelines.
+Этот Github Action не предоставляет никакого выхода, кроме как подключения к Tailnet.
 
 ## License
 
-This project is licensed under the Apache-2.0 License. See the [LICENSE](LICENSE) file for more details.
+Проект находится под лицензией MIT. Смотрите [LICENSE](LICENSE) для подробностей.
