@@ -16,11 +16,11 @@ jobs:
   connect:
     runs-on: ubuntu-latest
     steps:
-      - name: Connect to Headscale
+      - name: Connect to Headscale tailnet
         uses: pluxa1221/headscale-action@v1
         with:
-          login-server: 'login-server'
-          auth-key: 'auth-key'
+          login-server: '${{ secrets.HEADSCALE_URL }}'
+          auth-key: '${{ secrets.TAILSCALE_AUTH_KEY }}'
 ```
 
 ## Кастомизация
