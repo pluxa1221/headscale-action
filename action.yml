@@ -4,104 +4,23 @@ description: "Connects to a Headscale server using the Tailscale CLI"
 branding:
   icon: 'server'
   color: 'red'
-  
+
 inputs:
-  headscale-cli-address:
-    description: "Headscale CLI Address"
+  login-server:
+    description: "Headscale Login Server"
     required: true
-  headscale-cli-api-key:
-    description: "Headscale CLI API Key"
+  auth-key:
+    description: "Headscale Auth Key"
     required: true
-  headscale-user:
-    description: "Headscale User"
-    required: false
-    default: "github-actions"
-  headscale-preauthkey-expiration:
-    description: "Headscale Preauthkey Expiration"
-    required: false
-    default: "30m"
-  headscale-version:
-    description: "Headscale Version"
-    required: false
-    default: "0.27.1"
-  headscale-os-arch:
-    description: "Headscale OS and Architecture (see https://github.com/juanfont/headscale/releases for options)"
-    required: false
-    default: "linux_amd64"
 
 runs:
   using: "composite"
-  steps:
-    - id: install-headscale-cli
-      shell: bash
-      env:
-        HEADSCALE_VERSION: ${{ inputs.headscale-version }}
-        HEADSCALE_OS_ARCH: ${{ inputs.headscale-os-arch }}
-      run: |
-        echo "Installing and configuring headscale cli"
-        mkdir -p $HOME/.local/bin
-        curl -L -s -o $HOME/.local/bin/headscale https://github.com/juanfont/headscale/releases/download/v${HEADSCALE_VERSION}/headscale_${HEADSCALE_VERSION}_${HEADSCALE_OS_ARCH}
-        chmod +x $HOME/.local/bin/headscale
-        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-        # Create an empty config file (workaround for issue https://github.com/juanfont/headscale/issues/2193)
-        mkdir -p $HOME/.headscale && touch $HOME/.headscale/config.yaml
-    
-    - id: verify-headscale-version
-      shell: bash
-      env:
-        HEADSCALE_VERSION: ${{ inputs.headscale-version }}
-      run: |
-        echo "Verifying headscale version..."
-        MIN_VERSION="0.27.1"
-        INSTALLED_VERSION=$(headscale -c $HOME/.headscale/config.yaml version -o json 2>/dev/null | jq -r '.version // empty' | sed 's/^v//' | sed 's/+.*$//' || headscale -c $HOME/.headscale/config.yaml version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-        
-        if [ -z "$INSTALLED_VERSION" ]; then
-          echo "Error: Could not determine installed headscale version"
-          exit 1
-        fi
-        
-        echo "Installed version: $INSTALLED_VERSION (minimum required: $MIN_VERSION)"
-        
-        # Compare versions using sort -V (version sort)
-        # If installed version is less than minimum, it will be sorted first
-        SORTED_FIRST=$(printf '%s\n' "$MIN_VERSION" "$INSTALLED_VERSION" | sort -V | head -1)
-        if [ "$SORTED_FIRST" = "$INSTALLED_VERSION" ] && [ "$INSTALLED_VERSION" != "$MIN_VERSION" ]; then
-          echo "::error::Headscale version $INSTALLED_VERSION is below minimum required version $MIN_VERSION"
-          exit 1
-        fi
-        
-        echo "Version check passed: $INSTALLED_VERSION >= $MIN_VERSION"
-    
+  steps:    
     - id: install-tailscale-cli
       shell: bash
       run: |
         echo "Installing Tailscale cli"
         curl -fsSL https://tailscale.com/install.sh | sh
-
-    - id: configure-headscale-user
-      shell: bash
-      env:
-        HEADSCALE_CLI_ADDRESS: ${{ inputs.headscale-cli-address }}
-        HEADSCALE_CLI_API_KEY: ${{ inputs.headscale-cli-api-key }}
-        HEADSCALE_USER: ${{ inputs.headscale-user }}
-        HEADSCALE_PREAUTHKEY_EXPIRATION: ${{ inputs.headscale-preauthkey-expiration }}
-      run: |
-        echo "Creating user $HEADSCALE_USER..."
-        headscale -c $HOME/.headscale/config.yaml users create $HEADSCALE_USER || true
-        
-        # Get user ID (required for headscale 0.27.1+)
-        echo "Getting user ID for $HEADSCALE_USER..."
-        USER_ID=$(headscale -c $HOME/.headscale/config.yaml users list --name $HEADSCALE_USER -o json | jq -r '.[0].id')
-        if [ -z "$USER_ID" ] || [ "$USER_ID" = "null" ]; then
-          echo "Error: Could not find user ID for $HEADSCALE_USER"
-          exit 1
-        fi
-        
-        echo "Creating preauthkey for user $HEADSCALE_USER (ID: $USER_ID)..."
-        TAILSCALE_CLI_AUTH_KEY=$(headscale -c $HOME/.headscale/config.yaml preauthkeys create --ephemeral --user $USER_ID --expiration $HEADSCALE_PREAUTHKEY_EXPIRATION -o json | jq -r .key)
-        # Mask the auth key in the logs
-        echo "::add-mask::$TAILSCALE_CLI_AUTH_KEY"
-        echo "TAILSCALE_CLI_AUTH_KEY=$TAILSCALE_CLI_AUTH_KEY" >> $GITHUB_ENV
 
     - id: connect-tailscale
       uses: gacts/run-and-post-run@v1.4.4
@@ -111,8 +30,8 @@ runs:
           sudo tailscale up \
             --accept-dns \
             --accept-routes \
-            --authkey=${TAILSCALE_CLI_AUTH_KEY} \
-            --login-server=https://${{ inputs.headscale-cli-address }} \
+            --authkey=${{ inputs.auth-key }} \
+            --login-server=https://${{ inputs.login-server }} \
             --operator=${USER} \
             --timeout=90s 
           echo "Tailscale status:"
