@@ -31,7 +31,7 @@ runs:
             --accept-dns \
             --accept-routes \
             --authkey=${{ inputs.auth-key }} \
-            --login-server=https://${{ inputs.login-server }} \
+            --login-server=${{ inputs.login-server }} \
             --operator=${USER} \
             --timeout=90s 
           echo "Tailscale status:"
